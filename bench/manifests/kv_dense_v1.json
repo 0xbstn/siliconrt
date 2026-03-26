@@ -1,0 +1,172 @@
+{
+  "name": "kv_dense_v1",
+  "phase": "phase_1_kv_prefix_paged_bounded",
+  "goal": "Measure whether Apple-native prefix reuse plus bounded or paged KV can beat the stock path on warm TTFT, shared-prefix concurrency, memory-bounded stability, and long-context behavior.",
+  "charter": "Follow bench/BENCHMARK_CHARTER.md. Do not publish best-of-N alone. Prefer median and p95. Treat tiny-model single-stream wins as insufficient for repo-level claims.",
+  "backends": [
+    {
+      "name": "mlx_lm",
+      "required": true,
+      "notes": "Primary internal baseline and default comparison target."
+    },
+    {
+      "name": "siliconrt_candidate",
+      "required": true,
+      "notes": "Candidate runtime or cache policy under test."
+    },
+    {
+      "name": "llama_cpp_metal",
+      "required": false,
+      "notes": "External Apple baseline when the same model family is available."
+    },
+    {
+      "name": "vllm_metal",
+      "required": false,
+      "notes": "Compare only when the same workload is reproducible cleanly; do not force apples-to-oranges comparisons."
+    }
+  ],
+  "model_slots": [
+    {
+      "name": "dense_debug_small",
+      "family": "dense",
+      "parameter_band": "1B-4B",
+      "quantization": "4bit",
+      "context_focus": "long-context if available",
+      "notes": "Fast iteration model for harness bring-up and bug fixing."
+    },
+    {
+      "name": "dense_main",
+      "family": "dense",
+      "parameter_band": "7B-8B",
+      "quantization": "4bit",
+      "context_focus": "long-context preferred",
+      "notes": "Primary truth-terrain model for KV-first work."
+    },
+    {
+      "name": "dense_large_optional",
+      "family": "dense",
+      "parameter_band": "14B+",
+      "quantization": "4bit",
+      "context_focus": "long-context preferred",
+      "notes": "Only after the harness is stable and the machine budget is clear."
+    }
+  ],
+  "workloads": [
+    {
+      "name": "cold_vs_warm_prefix",
+      "purpose": "Measure warm-prefix TTFT reduction on a single request.",
+      "prefix_lengths": [256, 2048, 8192, 16384],
+      "suffix_lengths": [16, 64, 256],
+      "generation_lengths": [64, 256],
+      "concurrencies": [1],
+      "cache_hit_rates": [0, 100],
+      "notes": "Same large prefix, varying suffixes, repeated several times."
+    },
+    {
+      "name": "shared_prefix_burst",
+      "purpose": "Measure latency and throughput under shared-prefix concurrency.",
+      "prefix_lengths": [2048, 8192, 16384],
+      "suffix_lengths": [16, 64, 256],
+      "generation_lengths": [64, 256],
+      "concurrencies": [4, 8, 16],
+      "cache_hit_rates": [100],
+      "notes": "Burst several requests with the same prefix and distinct suffixes."
+    },
+    {
+      "name": "bounded_memory_pressure",
+      "purpose": "Measure eviction and stability under a fixed memory budget.",
+      "prefix_lengths": [2048, 8192],
+      "suffix_lengths": [64],
+      "generation_lengths": [64, 256],
+      "concurrencies": [4, 8, 16],
+      "cache_hit_rates": [0, 50, 90],
+      "notes": "Many distinct prefixes; force reuse, eviction, and promotion behavior."
+    },
+    {
+      "name": "long_multi_turn",
+      "purpose": "Measure later-turn behavior as history grows.",
+      "prefix_lengths": [2048, 8192],
+      "suffix_lengths": [64, 256],
+      "generation_lengths": [64, 256],
+      "concurrencies": [1, 4],
+      "cache_hit_rates": [50, 90],
+      "notes": "Growing history across 8-20 turns per session."
+    },
+    {
+      "name": "mixed_hits_misses",
+      "purpose": "Measure cache usefulness without hiding cold-start penalties.",
+      "prefix_lengths": [2048, 8192],
+      "suffix_lengths": [16, 64, 256],
+      "generation_lengths": [64, 256],
+      "concurrencies": [4, 8, 16],
+      "cache_hit_rates": [0, 50, 90, 100],
+      "notes": "Use a realistic hit-rate sweep instead of only all-hit workloads."
+    }
+  ],
+  "metrics": [
+    {
+      "name": "ttft_ms",
+      "required": true,
+      "notes": "Time to first token."
+    },
+    {
+      "name": "decode_tokens_per_sec",
+      "required": true,
+      "notes": "Steady-state decode speed."
+    },
+    {
+      "name": "throughput_tokens_per_sec",
+      "required": true,
+      "notes": "Aggregate throughput."
+    },
+    {
+      "name": "peak_memory_bytes",
+      "required": true,
+      "notes": "Peak memory during the run."
+    },
+    {
+      "name": "ttft_p50_ms",
+      "required": true,
+      "notes": "Median TTFT."
+    },
+    {
+      "name": "ttft_p95_ms",
+      "required": true,
+      "notes": "Tail TTFT."
+    },
+    {
+      "name": "ttft_p99_ms",
+      "required": false,
+      "notes": "Very-tail TTFT when sample size allows."
+    },
+    {
+      "name": "max_concurrent_sessions_before_failure",
+      "required": false,
+      "notes": "Capacity under the tested memory and cache policy."
+    },
+    {
+      "name": "cache_hit_rate",
+      "required": false,
+      "notes": "Observed hit rate, not only target hit rate."
+    },
+    {
+      "name": "eviction_count",
+      "required": false,
+      "notes": "How often cache entries were evicted."
+    }
+  ],
+  "comparison_rules": [
+    "Use the same model family, quantization, hardware, and prompt matrix whenever possible.",
+    "Treat siliconrt vs mlx_lm as the primary A/B gate.",
+    "Treat llama.cpp Metal and vllm-metal as external references, not as excuses for apples-to-oranges comparisons.",
+    "Treat public MetalRT numbers as published external references unless the setup is actually reproduced.",
+    "Mark any non-equivalent comparison explicitly in the result note."
+  ],
+  "reporting_rules": [
+    "Record median results for repeated runs.",
+    "Record ttft_p95_ms when sample count allows.",
+    "Never report best-of-N as the only headline metric.",
+    "A serious repo-level claim should include at least one dense 7B-8B class 4-bit model when the machine budget allows.",
+    "Record explicit byte budget and eviction behavior for bounded-memory experiments."
+  ]
+}

@@ -1,0 +1,206 @@
+cmake_minimum_required(VERSION 3.20)
+
+project(siliconrt_native LANGUAGES CXX OBJCXX)
+
+set(CMAKE_CXX_STANDARD 20)
+set(CMAKE_CXX_STANDARD_REQUIRED ON)
+set(CMAKE_CXX_EXTENSIONS OFF)
+
+find_library(FOUNDATION_FRAMEWORK Foundation REQUIRED)
+find_library(METAL_FRAMEWORK Metal REQUIRED)
+
+add_library(
+  siliconrt_native
+  STATIC
+    src/c_api.cpp
+)
+target_include_directories(
+  siliconrt_native
+  PUBLIC
+    ${CMAKE_CURRENT_SOURCE_DIR}/include
+)
+
+add_library(
+  siliconrt_metal
+  STATIC
+    src/metal_backing_store.mm
+    src/metal_buffer_ops.mm
+    src/metal_bounded_sequence.mm
+    src/metal_circular_sequence.mm
+    src/metal_window_linearizer.mm
+    src/metal_window_gather.mm
+    src/metal_window_checksum.mm
+    src/metal_window_score.mm
+    src/metal_window_stats.mm
+)
+target_include_directories(
+  siliconrt_metal
+  PUBLIC
+    ${CMAKE_CURRENT_SOURCE_DIR}/include
+)
+target_link_libraries(
+  siliconrt_metal
+  PUBLIC
+    siliconrt_native
+    ${FOUNDATION_FRAMEWORK}
+    ${METAL_FRAMEWORK}
+)
+
+add_executable(kv_smoke tests/kv_smoke.cpp)
+target_link_libraries(kv_smoke PRIVATE siliconrt_native)
+
+add_executable(c_api_smoke tests/c_api_smoke.cpp)
+target_link_libraries(c_api_smoke PRIVATE siliconrt_native)
+
+add_executable(c_api_borrowed_restore_smoke tests/c_api_borrowed_restore_smoke.cpp)
+target_link_libraries(c_api_borrowed_restore_smoke PRIVATE siliconrt_native)
+
+add_executable(c_api_partitioned_arena_smoke tests/c_api_partitioned_arena_smoke.cpp)
+target_link_libraries(c_api_partitioned_arena_smoke PRIVATE siliconrt_native)
+
+add_executable(c_api_borrowed_mutation_smoke tests/c_api_borrowed_mutation_smoke.cpp)
+target_link_libraries(c_api_borrowed_mutation_smoke PRIVATE siliconrt_native)
+
+add_executable(c_api_storage_layout_smoke tests/c_api_storage_layout_smoke.cpp)
+target_link_libraries(c_api_storage_layout_smoke PRIVATE siliconrt_native)
+
+add_executable(c_api_storage_handle_smoke tests/c_api_storage_handle_smoke.cpp)
+target_link_libraries(c_api_storage_handle_smoke PRIVATE siliconrt_native)
+
+add_executable(c_api_pressure tests/c_api_pressure.cpp)
+target_link_libraries(c_api_pressure PRIVATE siliconrt_native)
+
+add_executable(cache_profile_smoke tests/cache_profile_smoke.cpp)
+target_link_libraries(cache_profile_smoke PRIVATE siliconrt_native)
+
+add_executable(window_policy_smoke tests/window_policy_smoke.cpp)
+target_link_libraries(window_policy_smoke PRIVATE siliconrt_native)
+
+add_executable(window_presets_smoke tests/window_presets_smoke.cpp)
+target_link_libraries(window_presets_smoke PRIVATE siliconrt_native)
+
+add_executable(bounded_window_smoke tests/bounded_window_smoke.cpp)
+target_link_libraries(bounded_window_smoke PRIVATE siliconrt_native)
+
+add_executable(bounded_window_planner_smoke tests/bounded_window_planner_smoke.cpp)
+target_link_libraries(bounded_window_planner_smoke PRIVATE siliconrt_native)
+
+add_executable(prefix_descriptor_builder_smoke tests/prefix_descriptor_builder_smoke.cpp)
+target_link_libraries(prefix_descriptor_builder_smoke PRIVATE siliconrt_native)
+
+add_executable(bounded_decode_session_smoke tests/bounded_decode_session_smoke.cpp)
+target_link_libraries(bounded_decode_session_smoke PRIVATE siliconrt_native)
+
+add_executable(cxx_api_smoke tests/cxx_api_smoke.cpp)
+target_link_libraries(cxx_api_smoke PRIVATE siliconrt_native)
+
+add_executable(cxx_borrowed_api_smoke tests/cxx_borrowed_api_smoke.cpp)
+target_link_libraries(cxx_borrowed_api_smoke PRIVATE siliconrt_native)
+
+add_executable(cxx_partitioned_arena_smoke tests/cxx_partitioned_arena_smoke.cpp)
+target_link_libraries(cxx_partitioned_arena_smoke PRIVATE siliconrt_native)
+
+add_executable(cxx_borrowed_mutation_smoke tests/cxx_borrowed_mutation_smoke.cpp)
+target_link_libraries(cxx_borrowed_mutation_smoke PRIVATE siliconrt_native)
+
+add_executable(cxx_storage_layout_smoke tests/cxx_storage_layout_smoke.cpp)
+target_link_libraries(cxx_storage_layout_smoke PRIVATE siliconrt_native)
+
+add_executable(cxx_storage_handle_smoke tests/cxx_storage_handle_smoke.cpp)
+target_link_libraries(cxx_storage_handle_smoke PRIVATE siliconrt_native)
+
+add_executable(host_backing_store_smoke tests/host_backing_store_smoke.cpp)
+target_link_libraries(host_backing_store_smoke PRIVATE siliconrt_native)
+
+add_executable(metal_backing_store_smoke tests/metal_backing_store_smoke.mm)
+target_link_libraries(metal_backing_store_smoke PRIVATE siliconrt_metal)
+
+add_executable(metal_buffer_ops_smoke tests/metal_buffer_ops_smoke.mm)
+target_link_libraries(metal_buffer_ops_smoke PRIVATE siliconrt_metal)
+
+add_executable(bounded_sequence_plan_smoke tests/bounded_sequence_plan_smoke.cpp)
+target_link_libraries(bounded_sequence_plan_smoke PRIVATE siliconrt_native)
+
+add_executable(trim_plan_smoke tests/trim_plan_smoke.cpp)
+target_link_libraries(trim_plan_smoke PRIVATE siliconrt_native)
+
+add_executable(circular_sequence_plan_smoke tests/circular_sequence_plan_smoke.cpp)
+target_link_libraries(circular_sequence_plan_smoke PRIVATE siliconrt_native)
+
+add_executable(metal_bounded_sequence_smoke tests/metal_bounded_sequence_smoke.mm)
+target_link_libraries(metal_bounded_sequence_smoke PRIVATE siliconrt_metal)
+
+add_executable(metal_trim_sequence_smoke tests/metal_trim_sequence_smoke.mm)
+target_link_libraries(metal_trim_sequence_smoke PRIVATE siliconrt_metal)
+
+add_executable(metal_circular_sequence_smoke tests/metal_circular_sequence_smoke.mm)
+target_link_libraries(metal_circular_sequence_smoke PRIVATE siliconrt_metal)
+
+add_executable(metal_window_segments_smoke tests/metal_window_segments_smoke.mm)
+target_link_libraries(metal_window_segments_smoke PRIVATE siliconrt_metal)
+
+add_executable(metal_window_linearizer_smoke tests/metal_window_linearizer_smoke.mm)
+target_link_libraries(metal_window_linearizer_smoke PRIVATE siliconrt_metal)
+
+add_executable(metal_window_descriptor_smoke tests/metal_window_descriptor_smoke.mm)
+target_link_libraries(metal_window_descriptor_smoke PRIVATE siliconrt_metal)
+
+add_executable(metal_window_gather_smoke tests/metal_window_gather_smoke.mm)
+target_link_libraries(metal_window_gather_smoke PRIVATE siliconrt_metal)
+
+add_executable(metal_window_checksum_smoke tests/metal_window_checksum_smoke.mm)
+target_link_libraries(metal_window_checksum_smoke PRIVATE siliconrt_metal)
+
+add_executable(metal_window_score_smoke tests/metal_window_score_smoke.mm)
+target_link_libraries(metal_window_score_smoke PRIVATE siliconrt_metal)
+
+add_executable(metal_window_stats_smoke tests/metal_window_stats_smoke.mm)
+target_link_libraries(metal_window_stats_smoke PRIVATE siliconrt_metal)
+
+add_executable(storage_slice_smoke tests/storage_slice_smoke.cpp)
+target_link_libraries(storage_slice_smoke PRIVATE siliconrt_native)
+
+add_executable(cxx_runtime_smoke tests/cxx_runtime_smoke.cpp)
+target_link_libraries(cxx_runtime_smoke PRIVATE siliconrt_native)
+
+add_executable(bounded_runtime_smoke tests/bounded_runtime_smoke.cpp)
+target_link_libraries(bounded_runtime_smoke PRIVATE siliconrt_native)
+
+add_executable(bounded_runtime_bench bench/bounded_runtime_bench.cpp)
+target_link_libraries(bounded_runtime_bench PRIVATE siliconrt_native)
+
+add_executable(aliased_restore_bench bench/aliased_restore_bench.cpp)
+target_link_libraries(aliased_restore_bench PRIVATE siliconrt_native)
+
+add_executable(copy_on_grow_restore_bench bench/copy_on_grow_restore_bench.cpp)
+target_link_libraries(copy_on_grow_restore_bench PRIVATE siliconrt_native)
+
+add_executable(c_api_restore_bench bench/c_api_restore_bench.cpp)
+target_link_libraries(c_api_restore_bench PRIVATE siliconrt_native)
+
+add_executable(metal_bounded_sequence_bench bench/metal_bounded_sequence_bench.mm)
+target_link_libraries(metal_bounded_sequence_bench PRIVATE siliconrt_metal)
+
+add_executable(partitioned_kv_arena_smoke tests/partitioned_kv_arena_smoke.cpp)
+target_link_libraries(partitioned_kv_arena_smoke PRIVATE siliconrt_native)
+
+add_executable(partitioned_runtime_plan_smoke tests/partitioned_runtime_plan_smoke.cpp)
+target_link_libraries(partitioned_runtime_plan_smoke PRIVATE siliconrt_native)
+
+add_executable(partitioned_prefix_store_smoke tests/partitioned_prefix_store_smoke.cpp)
+target_link_libraries(partitioned_prefix_store_smoke PRIVATE siliconrt_native)
+
+add_executable(partitioned_bounded_runtime_smoke tests/partitioned_bounded_runtime_smoke.cpp)
+target_link_libraries(partitioned_bounded_runtime_smoke PRIVATE siliconrt_native)
+
+add_executable(restore_plan_smoke tests/restore_plan_smoke.cpp)
+target_link_libraries(restore_plan_smoke PRIVATE siliconrt_native)
+
+add_executable(aliased_restore_store_smoke tests/aliased_restore_store_smoke.cpp)
+target_link_libraries(aliased_restore_store_smoke PRIVATE siliconrt_native)
+
+add_executable(copy_on_grow_restore_smoke tests/copy_on_grow_restore_smoke.cpp)
+target_link_libraries(copy_on_grow_restore_smoke PRIVATE siliconrt_native)
+
+add_executable(copy_on_grow_decode_session_smoke tests/copy_on_grow_decode_session_smoke.cpp)
+target_link_libraries(copy_on_grow_decode_session_smoke PRIVATE siliconrt_native)

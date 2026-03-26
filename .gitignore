@@ -1,0 +1,28 @@
+.DS_Store
+__pycache__/
+*.pyc
+.pytest_cache/
+.ruff_cache/
+.venv/
+dist/
+build/
+.mypy_cache/
+*.egg-info/
+
+# local artifacts
+/tmp/
+/results/
+/captures/
+
+# private local notes and operator instructions
+.claude/
+AGENT.md
+CLAUDE.md
+ROADMAP.md
+research/
+bench/results/
+bench/BENCHMARK_CHARTER.md
+bench/README.md
+kernels/README.md
+native/README.md
+scripts/README.md
